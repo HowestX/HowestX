@@ -1,14 +1,16 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
-from ratelimitbackend import admin
+from django.contrib import admin
 from django.conf.urls.static import static
 
 import django.contrib.auth.views
 from microsite_configuration import microsite
+from edx_admin.admin import RatelimitSudoAdminSite
 import oauth_exchange.views
 
 # Uncomment the next two lines to enable the admin:
 if settings.DEBUG or settings.FEATURES.get('ENABLE_DJANGO_ADMIN_SITE'):
+    admin.site = RatelimitSudoAdminSite()
     admin.autodiscover()
 
 # Use urlpatterns formatted as within the Django docs with first parameter "stuck" to the open parenthesis
@@ -86,6 +88,8 @@ urlpatterns = (
 
     # Course content API
     url(r'^api/course_structure/', include('course_structure_api.urls', namespace='course_structure_api')),
+
+    url(r'^sudo/$', 'sudo.views.sudo'),
 
     # User API endpoints
     url(r'^api/user/', include('openedx.core.djangoapps.user_api.urls')),

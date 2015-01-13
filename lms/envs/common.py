@@ -1112,6 +1112,10 @@ MIDDLEWARE_CLASSES = (
 
     # catches any uncaught RateLimitExceptions and returns a 403 instead of a 500
     'ratelimitbackend.middleware.RateLimitMiddleware',
+
+    # force re-authentication before activating administrative functions
+    'sudo.middleware.SudoMiddleware',
+
     # needs to run after locale middleware (or anything that modifies the request context)
     'edxmako.middleware.MakoMiddleware',
 
@@ -1748,6 +1752,9 @@ INSTALLED_APPS = (
 
     # Surveys
     'survey',
+
+    # Allows sudo-mode
+    'sudo',
 
     'lms.djangoapps.lms_xblock',
 
