@@ -179,3 +179,10 @@ class TestInstructorDashboard(ModuleStoreTestCase, LoginEnrollmentTestCase):
         total_amount = single_purchase_total + bulk_purchase_total
         response = self.client.get(self.url)
         self.assertIn('{currency}{amount}'.format(currency='$', amount=total_amount), response.content)
+
+    def test_sudo_required_on_dashboard(self):
+        """
+        Test that sudo_required redirect user to password page.
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
