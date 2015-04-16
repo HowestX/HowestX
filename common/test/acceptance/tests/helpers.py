@@ -25,6 +25,7 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from unittest import TestCase
+from ..pages.common.sudo_page import SudoPage
 
 
 from ..pages.common import BASE_URL
@@ -579,6 +580,14 @@ class UniqueCourseTest(WebAppTest):
             deprecated=(default_store == 'draft')
         )
         return unicode(course_key)
+
+    def get_sudo_access(self, redirect_page, password):
+        """
+        Get sudo access for instructor or staff user.
+        """
+        sudo_password_page = SudoPage(self.browser, redirect_page)
+        sudo_password_page.visit()
+        sudo_password_page.submit_sudo_password_and_get_access(password)
 
 
 class YouTubeConfigError(Exception):

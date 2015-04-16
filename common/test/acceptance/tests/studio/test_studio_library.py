@@ -513,6 +513,7 @@ class LibraryUsersPageTest(StudioLibraryTest):
         AutoAuthPage(self.browser, username="second", email="second@example.com", no_login=True).visit()
 
         self.page = LibraryUsersPage(self.browser, self.library_key)
+        self.get_sudo_access(self.page, self.user.get("password"))
         self.page.visit()
 
     def _expect_refresh(self):

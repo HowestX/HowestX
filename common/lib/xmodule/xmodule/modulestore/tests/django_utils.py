@@ -431,3 +431,14 @@ class ModuleStoreTestCase(TestCase):
                 fields={"display_name": "Syllabus"},
             )
         return self.toy_loc
+
+    def grant_sudo_access(self, region, password):
+        """
+        Grant sudo access to staff or instructor user.
+        """
+        region = region.replace(':', '').replace('/', '_').replace('+', '_')
+        self.client.post(
+            '/sudo/?region={}'.format(region),
+            {'password': password},
+            follow=True
+        )

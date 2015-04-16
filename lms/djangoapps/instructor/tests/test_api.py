@@ -254,6 +254,7 @@ class TestInstructorAPIDenyLevels(ModuleStoreTestCase, LoginEnrollmentTestCase):
         staff_member = StaffFactory(course_key=self.course.id)
         CourseEnrollment.enroll(staff_member, self.course.id)
         self.client.login(username=staff_member.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
         # Try to promote to forums admin - not working
         # update_forum_role(self.course.id, staff_member, FORUM_ROLE_ADMINISTRATOR, 'allow')
 
@@ -283,6 +284,7 @@ class TestInstructorAPIDenyLevels(ModuleStoreTestCase, LoginEnrollmentTestCase):
         inst = InstructorFactory(course_key=self.course.id)
         CourseEnrollment.enroll(inst, self.course.id)
         self.client.login(username=inst.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
         for endpoint, args in self.staff_level_endpoints:
             # TODO: make these work
@@ -320,6 +322,7 @@ class TestInstructorAPIBulkAccountCreationAndEnrollment(ModuleStoreTestCase, Log
         self.course = CourseFactory.create()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
         self.url = reverse('register_and_enroll_students', kwargs={'course_id': self.course.id.to_deprecated_string()})
 
         self.not_enrolled_student = UserFactory(
@@ -581,6 +584,7 @@ class TestInstructorAPIEnrollment(ModuleStoreTestCase, LoginEnrollmentTestCase):
         self.course = CourseFactory.create()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
         self.enrolled_student = UserFactory(username='EnrolledStudent', first_name='Enrolled', last_name='Student')
         CourseEnrollment.enroll(
@@ -1145,23 +1149,6 @@ class TestInstructorAPIEnrollment(ModuleStoreTestCase, LoginEnrollmentTestCase):
         self.assertEqual(response.status_code, 200)
         return response
 
-    def test_sudo_access_on_change_student_enrollment(self):
-        """
-        Test that on change student enrollment sudo_required redirect user to password page.
-        """
-        url = reverse(
-            'students_update_enrollment',
-            kwargs={'course_id': self.course.id.to_deprecated_string()},
-        )
-        params = {
-            'identifiers': self.enrolled_student.email,
-            'action': 'enroll',
-            'email_students': True,
-        }
-        response = self.client.post(url, params)
-        self.assertEqual(response.status_code, 302)
-
-
 
 @attr('shard_1')
 @ddt.ddt
@@ -1176,6 +1163,7 @@ class TestInstructorAPIBulkBetaEnrollment(ModuleStoreTestCase, LoginEnrollmentTe
         self.course = CourseFactory.create()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
         self.beta_tester = BetaTesterFactory(course_key=self.course.id)
         CourseEnrollment.enroll(
@@ -1498,6 +1486,7 @@ class TestInstructorAPILevelsAccess(ModuleStoreTestCase, LoginEnrollmentTestCase
         self.course = CourseFactory.create()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
         self.other_instructor = InstructorFactory(course_key=self.course.id)
         self.other_staff = StaffFactory(course_key=self.course.id)
@@ -1736,6 +1725,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         self.course_mode.save()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
         self.cart = Order.get_cart_for_user(self.instructor)
         self.coupon_code = 'abcde'
         self.coupon = Coupon(code=self.coupon_code, description='testing code', course_id=self.course.id,
@@ -2196,6 +2186,7 @@ class TestInstructorAPIRegradeTask(ModuleStoreTestCase, LoginEnrollmentTestCase)
         self.course = CourseFactory.create()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
         self.student = UserFactory()
         CourseEnrollment.enroll(self.student, self.course.id)
@@ -2365,6 +2356,7 @@ class TestEntranceExamInstructorAPIRegradeTask(ModuleStoreTestCase, LoginEnrollm
         # Add instructor to invalid ee course
         CourseInstructorRole(self.course_with_invalid_ee.id).add_users(self.instructor)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
         self.student = UserFactory()
         CourseEnrollment.enroll(self.student, self.course.id)
@@ -2604,6 +2596,7 @@ class TestInstructorSendEmail(ModuleStoreTestCase, LoginEnrollmentTestCase):
         self.course = CourseFactory.create()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
         test_subject = u'\u1234 test subject'
         test_message = u'\u6824 test message'
         self.full_test_message = {
@@ -2729,6 +2722,7 @@ class TestInstructorAPITaskLists(ModuleStoreTestCase, LoginEnrollmentTestCase):
         )
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
         self.student = UserFactory()
         CourseEnrollment.enroll(self.student, self.course.id)
@@ -2845,6 +2839,7 @@ class TestInstructorEmailContentList(ModuleStoreTestCase, LoginEnrollmentTestCas
         self.course = CourseFactory.create()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
         self.tasks = {}
         self.emails = {}
         self.emails_info = {}
@@ -2992,6 +2987,7 @@ class TestInstructorAPIAnalyticsProxy(ModuleStoreTestCase, LoginEnrollmentTestCa
         self.course = CourseFactory.create()
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
     @ddt.data((ModuleStoreEnum.Type.mongo, False), (ModuleStoreEnum.Type.split, True))
     @ddt.unpack
@@ -3002,6 +2998,7 @@ class TestInstructorAPIAnalyticsProxy(ModuleStoreTestCase, LoginEnrollmentTestCa
             course = CourseFactory.create()
             instructor_local = InstructorFactory(course_key=course.id)
             self.client.login(username=instructor_local.username, password='test')
+            self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
             act.return_value = self.FakeProxyResponse()
 
@@ -3248,6 +3245,7 @@ class TestDueDateExtensions(ModuleStoreTestCase, LoginEnrollmentTestCase):
 
         self.instructor = InstructorFactory(course_key=course.id)
         self.client.login(username=self.instructor.username, password='test')
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
 
     def test_change_due_date(self):
         url = reverse('change_due_date', kwargs={'course_id': self.course.id.to_deprecated_string()})

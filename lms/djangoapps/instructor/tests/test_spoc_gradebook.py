@@ -39,6 +39,7 @@ class TestGradebook(ModuleStoreTestCase):
             kwargs['grading_policy'] = self.grading_policy
 
         self.course = CourseFactory.create(**kwargs)
+        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
         chapter = ItemFactory.create(
             parent_location=self.course.location,
             category="sequential",

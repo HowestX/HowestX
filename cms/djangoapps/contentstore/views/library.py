@@ -17,6 +17,7 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_http_methods
 from django_future.csrf import ensure_csrf_cookie
+from django_sudo.decorators import sudo_required
 from edxmako.shortcuts import render_to_response
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
@@ -201,6 +202,7 @@ def library_blocks_view(library, user, response_format):
     })
 
 
+@sudo_required
 def manage_library_users(request, library_key_string):
     """
     Studio UI for editing the users within a library.

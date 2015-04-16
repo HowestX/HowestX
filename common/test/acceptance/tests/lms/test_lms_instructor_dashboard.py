@@ -21,7 +21,9 @@ class BaseInstructorDashboardTest(EventsTestMixin, UniqueCourseTest):
         Logs in as an instructor and returns the id.
         """
         username = "test_instructor_{uuid}".format(uuid=self.unique_id[0:6])
-        auto_auth_page = AutoAuthPage(self.browser, username=username, course_id=self.course_id, staff=True)
+        auto_auth_page = AutoAuthPage(
+            self.browser, username=username, course_id=self.course_id, staff=True, password="test"
+        )
         return username, auto_auth_page.visit().get_user_id()
 
     def visit_instructor_dashboard(self):
@@ -29,6 +31,7 @@ class BaseInstructorDashboardTest(EventsTestMixin, UniqueCourseTest):
         Visits the instructor dashboard.
         """
         instructor_dashboard_page = InstructorDashboardPage(self.browser, self.course_id)
+        self.get_sudo_access(instructor_dashboard_page, "test")
         instructor_dashboard_page.visit()
         return instructor_dashboard_page
 

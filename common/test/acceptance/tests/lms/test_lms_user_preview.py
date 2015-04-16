@@ -6,6 +6,7 @@ Tests the "preview" selector in the LMS that allows changing between Staff, Stud
 from ..helpers import UniqueCourseTest, create_user_partition_json
 from ...pages.studio.auto_auth import AutoAuthPage
 from ...pages.lms.courseware import CoursewarePage
+from ...pages.lms.instructor_dashboard import InstructorDashboardPage
 from ...pages.lms.staff_view import StaffPage
 from ...pages.lms.course_nav import CourseNavPage
 from ...fixtures.course import CourseFixture, XBlockFixtureDesc
@@ -37,8 +38,10 @@ class StaffViewTest(UniqueCourseTest):
 
         # Auto-auth register for the course.
         # Do this as global staff so that you will see the Staff View
+        staff_password = 'test'
         AutoAuthPage(self.browser, username=self.USERNAME, email=self.EMAIL,
-                     course_id=self.course_id, staff=True).visit()
+                     course_id=self.course_id, staff=True, password=staff_password).visit()
+        self.get_sudo_access(InstructorDashboardPage(self.browser, self.course_id), staff_password)
 
     def _goto_staff_page(self):
         """

@@ -1,1 +1,3 @@
-# This space intentionally left blank
+"""
+This space intentionally left blank
+"""

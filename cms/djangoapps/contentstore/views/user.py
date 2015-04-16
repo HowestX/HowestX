@@ -38,8 +38,8 @@ def request_course_creator(request):
 # pylint: disable=unused-argument
 @login_required
 @ensure_csrf_cookie
-@sudo_required
 @require_http_methods(("GET", "POST", "PUT", "DELETE"))
+@sudo_required
 def course_team_handler(request, course_key_string=None, email=None):
     """
     The restful handler for course team users.

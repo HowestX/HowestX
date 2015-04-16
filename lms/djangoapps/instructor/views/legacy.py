@@ -51,7 +51,7 @@ from student.models import (
     CourseEnrollment,
     CourseEnrollmentAllowed,
 )
-from sudo.decorators import sudo_required
+from django_sudo.decorators import sudo_required
 import track.views
 from django.utils.translation import ugettext as _
 

@@ -49,8 +49,8 @@ log = logging.getLogger(__name__)
 
 
 @ensure_csrf_cookie
-@sudo_required
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@sudo_required
 def instructor_dashboard_2(request, course_id):
     """ Display the instructor dashboard for a course. """
     try:

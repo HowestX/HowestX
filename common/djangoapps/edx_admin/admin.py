@@ -1,3 +1,7 @@
+"""
+RatelimitSudoAdminSite
+"""
+
 from ratelimitbackend.admin import RateLimitAdminSite
 from sudo.admin import SudoAdminSite
 
