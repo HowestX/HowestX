@@ -1,6 +1,21 @@
+<%! from urllib import quote %>
 <%! from django.utils.translation import ugettext as _ %>
 <%! from django.template.defaultfilters import escapejs %>
 <%namespace name='static' file='/static_content.html'/>
+
+<%
+def check_is_sudo():
+    if context.get('request', UNDEFIEND) is not UNDEFIEND:
+        return request.is_sudo(region=region)
+    return False
+%>
+
+<%
+def get_current_url():
+    if context.get('request', UNDEFIEND) is not UNDEFIEND:
+        return quote(request.path)
+    return ''
+%>
 
 ## The JS for this is defined in xqa_interface.html
 ${block_content}
@@ -19,7 +34,9 @@ ${block_content}
   </div>
 %  endif
 <div aria-hidden="true" class="wrap-instructor-info">
-  <a class="instructor-info-action" href="#${element_id}_debug" id="${element_id}_trig">${_("Staff Debug Info")}</a>
+  <a class="instructor-info-action staff-debug" href="#" id="staff_debug" data-element-id="${element_id}" data-is-sudo="${check_is_sudo()}">${_("Staff Debug Info")}</a>
+  <a class="staff-debug-trig" href="#${element_id}_debug" id="${element_id}_trig"></a>
+  <a class="sudo-modal-trig" href="#${element_id}_sudo_modal" id="${element_id}_sudo_trig"></a>
 
   %  if settings.FEATURES.get('ENABLE_STUDENT_HISTORY_VIEW') and \
     location.category == 'problem':
@@ -114,6 +131,25 @@ category = ${category | h}
     </form>
 
     <div id="${element_id}_history_text" class="staff_info" style="display:block">
+    </div>
+  </div>
+</section>
+
+<section aria-hidden="true" class="modal sudo-modal" id="${element_id}_sudo_modal" style="overflow:auto; display: none;" >
+  <div class="inner-wrapper" style="color:black">
+    <header>
+      <h2>${_("Get Sudo Access")}</h2>
+    </header>
+    <hr />
+    <div class="modal-body">
+        <form class="sudo-form" method="post" action="/sudo/?region=${region}&next=${get_current_url()}" data-region="${region}">
+            <input type="hidden" name="csrfmiddlewaretoken" value="${context.get('csrf_token', '')}"/>
+            <p style="margin: 30px;">
+                <label for="id_password">Password:</label>
+                <input name="password" id="id_password" placeholder="Password" type="password">
+                <input style="margin-left: 5px;" align="right" type="submit" id="sudo-button" class="sudo-button" value="Submit">
+            </p>
+        </form>
     </div>
   </div>
 </section>

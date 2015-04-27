@@ -99,7 +99,15 @@ var StaffDebug = (function(){
         error_msg: gettext('Failed to rescore problem.'),
         delete_module: false
     });
-  }
+  };
+
+  check_sudo_and_view_modal = function(element_id, is_sudo){
+    if (is_sudo === "True") {
+        $("#" + element_id + "_trig").click();
+    }else{
+        $("#"+element_id+"_sudo_trig").click();
+    }
+  };
 
   return {
       reset: reset,
@@ -108,7 +116,8 @@ var StaffDebug = (function(){
       do_idash_action: do_idash_action,
       get_current_url: get_current_url,
       get_url: get_url,
-      get_user: get_user
+      get_user: get_user,
+      check_sudo_and_view_modal: check_sudo_and_view_modal
   }
 })();
 
@@ -125,6 +134,10 @@ $(document).ready(function() {
     });
     $courseContent.on("click", '.staff-debug-rescore', function() {
         StaffDebug.rescore($(this).parent().data('location-name'), $(this).parent().data('location'));
+        return false;
+    });
+    $courseContent.on("click", '.staff-debug', function() {
+        StaffDebug.check_sudo_and_view_modal($(this).data('element-id'), $(this).data('is-sudo'));
         return false;
     });
 });

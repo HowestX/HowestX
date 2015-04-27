@@ -35,7 +35,7 @@ class TestInstructorEnrollsStudent(ModuleStoreTestCase, LoginEnrollmentTestCase)
 
         self.course = CourseFactory.create()
 
-        self.grant_sudo_access(self.course.id.to_deprecated_string(), "test")
+        self.grant_sudo_access(unicode(self.course.id), "test")
 
         self.users = [
             UserFactory.create(username="student%d" % i, email="student%d@test.com" % i)

@@ -20,6 +20,9 @@ def sudo_required(func_or_region):
     Can also specify a particular sudo region (to only
     allow access to that region).
 
+    Also get course_id, course_key_string and library_key_string
+    from kwargs and set as region if region itself is None.
+
     >>> @sudo_required('admin_page')
     >>> def secure_admin_page(request):
     >>>     ...

@@ -47,7 +47,7 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
         """Navigate to the instructor dash's email view"""
         # Pull up email view on instructor dashboard
         url = reverse('instructor_dashboard', kwargs={'course_id': self.course.id.to_deprecated_string()})
-        self.grant_sudo_access(self.course.id.to_deprecated_string(), 'test')
+        self.grant_sudo_access(unicode(self.course.id), 'test')
         response = self.client.get(url)
         email_section = '<div class="vert-left send-email" id="section-send-email">'
         # If this fails, it is likely because ENABLE_INSTRUCTOR_EMAIL is set to False

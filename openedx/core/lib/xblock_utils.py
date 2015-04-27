@@ -209,7 +209,7 @@ def grade_histogram(module_id):
 
 
 @contract(user=User, has_instructor_access=bool, block=XBlock, view=basestring, frag=Fragment, context="dict|None")
-def add_staff_markup(user, has_instructor_access, block, view, frag, context):  # pylint: disable=unused-argument
+def add_staff_markup(user, has_instructor_access, course_id, block, view, frag, context):  # pylint: disable=unused-argument
     """
     Updates the supplied module with a new get_html function that wraps
     the output of the old get_html function with additional information
@@ -297,6 +297,7 @@ def add_staff_markup(user, has_instructor_access, block, view, frag, context):  
         'category': str(block.__class__.__name__),
         # Template uses element_id in js function names, so can't allow dashes
         'element_id': block.location.html_id().replace('-', '_'),
+        'region': unicode(course_id).replace(':', '').replace('/', '_').replace('+', '_'),
         'edit_link': edit_link,
         'user': user,
         'xqa_server': settings.FEATURES.get('XQA_SERVER', "http://your_xqa_server.com"),

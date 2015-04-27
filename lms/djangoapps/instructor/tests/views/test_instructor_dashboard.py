@@ -36,6 +36,7 @@ class TestInstructorDashboard(ModuleStoreTestCase, LoginEnrollmentTestCase):
         # Create instructor account
         self.instructor = AdminFactory.create()
         self.client.login(username=self.instructor.username, password="test")
+        self.grant_sudo_access(unicode(self.course.id), 'test')
 
         # URL for instructor dash
         self.url = reverse('instructor_dashboard', kwargs={'course_id': self.course.id.to_deprecated_string()})
@@ -184,5 +185,8 @@ class TestInstructorDashboard(ModuleStoreTestCase, LoginEnrollmentTestCase):
         """
         Test that sudo_required redirect user to password page.
         """
+        # Logout to remove sudo access.
+        self.client.logout()
+        self.client.login(username=self.instructor.username, password="test")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)

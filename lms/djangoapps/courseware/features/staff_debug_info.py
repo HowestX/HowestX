@@ -7,6 +7,7 @@ from lettuce import world, step
 from common import create_course, course_id
 from courseware.courses import get_course_by_id
 from instructor.access import allow_access
+from terrain.steps import i_get_sudo_access
 
 
 @step(u'i am staff member for the course "([^"]*)"$')
@@ -28,6 +29,8 @@ def i_am_staff_member_for_the_course(step, course_number):
 @step(u'I can view staff debug info')
 def view_staff_debug_info(step):
     css_selector = "a.instructor-info-action"
+    world.css_click(css_selector)
+    i_get_sudo_access(step, 'test')
     world.css_click(css_selector)
     world.wait_for_visible("section.staff-modal")
 
