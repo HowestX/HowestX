@@ -1,7 +1,42 @@
-
 {% block body %}
-<form class="sudo-form" method="post" style="margin: 0 auto; width: 200px;">{% csrf_token %}
-{{ form.as_p }}
-<input type="submit" value="Submit" />
-</form>
+    {% load i18n %}
+    {% load compressed %}
+    {% compressed_css 'style-vendor' %}
+    {% compressed_css 'style-vendor-tinymce-content' %}
+    {% compressed_css 'style-vendor-tinymce-skin' %}
+    {% compressed_css 'style-app' %}
+    {% compressed_css 'style-app-extend1' %}
+    {% compressed_css 'style-xmodule' %}
+
+<a href="#sudo-modal" id="sudo-modal-trig" style="display: none;"></a>
+<section aria-hidden="true" class="modal sudo-modal" id="sudo-modal" style="overflow:auto; display: none;" >
+  <div class="inner-wrapper" style="color:black">
+    <header>
+      <h2>{% trans "Confirm Your Password To Get Sudo Access" %}</h2>
+    </header>
+    <hr />
+    <div>
+        <form class="sudo-form" method="post" action="">{% csrf_token %}
+            <p style="margin: 30px;">
+                <label for="id_password">{% trans "Password" %}</label>
+                <input name="password" id="id_password" placeholder="{% trans 'Password' %}" type="password">
+                <input align="right" type="submit" id="sudo-button" class="sudo-button" value="{% trans 'Submit' %}">
+            </p>
+        </form>
+    </div>
+  </div>
+</section>
+<script type="text/javascript">
+      window.baseUrl = "{{STATIC_URL}}";
+      var require = {baseUrl: window.baseUrl};
+</script>
+<script type="text/javascript" src="{{STATIC_URL}}js/vendor/require.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}require-config.js"></script>
+<script type = "text/javascript">
+require(["jquery", "jquery.leanModal"], function($) {
+    var sudoModalTrig = $("#sudo-modal-trig");
+    sudoModalTrig.leanModal();
+    sudoModalTrig.click();
+});
+</script>
 {% endblock %}

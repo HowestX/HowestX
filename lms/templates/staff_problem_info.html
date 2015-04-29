@@ -138,16 +138,16 @@ category = ${category | h}
 <section aria-hidden="true" class="modal sudo-modal" id="${element_id}_sudo_modal" style="overflow:auto; display: none;" >
   <div class="inner-wrapper" style="color:black">
     <header>
-      <h2>${_("Get Sudo Access")}</h2>
+      <h2>${_("Confirm Your Password To Get Sudo Access")}</h2>
     </header>
     <hr />
     <div class="modal-body">
         <form class="sudo-form" method="post" action="/sudo/?region=${region}&next=${get_current_url()}" data-region="${region}">
             <input type="hidden" name="csrfmiddlewaretoken" value="${context.get('csrf_token', '')}"/>
             <p style="margin: 30px;">
-                <label for="id_password">Password:</label>
-                <input name="password" id="id_password" placeholder="Password" type="password">
-                <input style="margin-left: 5px;" align="right" type="submit" id="sudo-button" class="sudo-button" value="Submit">
+                <label for="id_password">${_('Password')}</label>
+                <input name="password" id="id_password" placeholder="${_('Password')}" type="password">
+                <input align="right" type="submit" id="sudo-button" class="sudo-button" value="${_('Submit')}">
             </p>
         </form>
     </div>
