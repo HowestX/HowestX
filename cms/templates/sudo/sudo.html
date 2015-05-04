@@ -33,10 +33,16 @@
 <script type="text/javascript" src="{{STATIC_URL}}js/vendor/require.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}require-config.js"></script>
 <script type = "text/javascript">
-require(["jquery", "jquery.leanModal"], function($) {
-    var sudoModalTrig = $("#sudo-modal-trig");
-    sudoModalTrig.leanModal();
-    sudoModalTrig.click();
-});
+    require(['domReady'], function (domReady) {
+        domReady(function () {
+            require(["jquery", "jquery.leanModal"], function ($) {
+                var sudoModalTrig = $("#sudo-modal-trig");
+                sudoModalTrig.leanModal();
+                sudoModalTrig.click();
+                $("#lean_overlay").remove();
+            });
+        });
+    });
 </script>
+<div id="sudo_overlay"></div>
 {% endblock %}

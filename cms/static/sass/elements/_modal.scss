@@ -185,3 +185,14 @@
     }
   }
 }
+
+#sudo_overlay {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: #000;
+    opacity: 0.5;
+}
