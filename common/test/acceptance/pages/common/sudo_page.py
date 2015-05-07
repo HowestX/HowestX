@@ -2,6 +2,7 @@
 Django sudo page to get sudo access.
 """
 
+from bok_choy.javascript import wait_for_js
 from bok_choy.page_object import PageObject
 
 
@@ -39,6 +40,7 @@ class SudoPage(PageObject):
         """
         return self.q(css='{} input[type=submit]'.format(self.SUDO_FORM))
 
+    @wait_for_js
     def submit_sudo_password_and_get_access(self, password):
         """
         Fill password in input field and click submit.

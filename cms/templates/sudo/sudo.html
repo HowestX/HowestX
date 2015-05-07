@@ -33,9 +33,9 @@
 <script type="text/javascript" src="{{STATIC_URL}}js/vendor/require.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}require-config.js"></script>
 <script type = "text/javascript">
-    require(['domReady'], function (domReady) {
+    require(['domReady', "jquery"], function (domReady, $) {
         domReady(function () {
-            require(["jquery", "jquery.leanModal"], function ($) {
+            require(["jquery.leanModal"], function () {
                 var sudoModalTrig = $("#sudo-modal-trig");
                 sudoModalTrig.leanModal();
                 sudoModalTrig.click();
