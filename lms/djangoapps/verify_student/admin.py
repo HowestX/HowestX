@@ -1,4 +1,4 @@
-from ratelimitbackend import admin
+from django.contrib import admin
 from config_models.admin import ConfigurationModelAdmin
 from verify_student.models import (
     SoftwareSecurePhotoVerification,

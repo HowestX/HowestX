@@ -2,7 +2,10 @@ from django.conf import settings
 from django.conf.urls import patterns, include, url
 
 # There is a course creators admin table.
-from ratelimitbackend import admin
+from django.contrib import admin
+from ratelimitbackend.admin import RateLimitAdminSite
+
+admin.site = RateLimitAdminSite()
 admin.autodiscover()
 
 # pylint: disable=bad-continuation
