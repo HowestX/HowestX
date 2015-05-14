@@ -48,8 +48,32 @@ from opaque_keys.edx.locations import SlashSeparatedCourseKey
 log = logging.getLogger(__name__)
 
 
+def check_staff_or_404():
+    """
+    Decorator with argument that requires an access level of the requesting
+    user. If the requirement is not satisfied, returns an
+    Http404 (404).
+
+    Assumes that request is in args[0].
+    Assumes that course_id is in kwargs['course_id'].
+    """
+
+    def decorator(func):  # pylint: disable=missing-docstring
+        def wrapped(*args, **kwargs):  # pylint: disable=missing-docstring
+            request = args[0]
+            course = get_course_by_id(CourseKey.from_string(kwargs['course_id']))
+            user_is_staff = has_access(request.user, "staff", course)
+            if user_is_staff:
+                return func(*args, **kwargs)
+            else:
+                raise Http404
+        return wrapped
+    return decorator
+
+
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@check_staff_or_404()
 @sudo_required
 def instructor_dashboard_2(request, course_id):
     """ Display the instructor dashboard for a course. """
@@ -69,9 +93,6 @@ def instructor_dashboard_2(request, course_id):
         'staff': has_access(request.user, 'staff', course),
         'forum_admin': has_forum_access(request.user, course_key, FORUM_ROLE_ADMINISTRATOR),
     }
-
-    if not access['staff']:
-        raise Http404()
 
     sections = [
         _section_course_info(course, access),
