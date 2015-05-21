@@ -26,6 +26,8 @@ from django.shortcuts import redirect
 from certificates import api as certs_api
 from edxmako.shortcuts import render_to_response, render_to_string, marketing_link
 from django_future.csrf import ensure_csrf_cookie
+from django_sudo.utils import region_name
+from sudo.utils import revoke_sudo_privileges
 from django.views.decorators.cache import cache_control
 from django.db import transaction
 from markupsafe import escape
@@ -323,6 +325,11 @@ def index(request, course_id, chapter=None, section=None,
 
      - HTTPresponse
     """
+
+    # Revoke sudo privileges from a request explicitly
+    region = region_name(course_id)
+    if request.is_sudo(region=region):
+        revoke_sudo_privileges(request, region=region)
 
     course_key = CourseKey.from_string(course_id)
 

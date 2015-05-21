@@ -18,6 +18,8 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_http_methods
 from django_future.csrf import ensure_csrf_cookie
 from django_sudo.decorators import sudo_required
+from django_sudo.utils import region_name
+from sudo.utils import revoke_sudo_privileges
 from edxmako.shortcuts import render_to_response
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
@@ -61,6 +63,10 @@ def library_handler(request, library_key_string=None):
 
     # request method is get, since only GET and POST are allowed by @require_http_methods(('GET', 'POST'))
     if library_key_string:
+        # Revoke sudo privileges from a request explicitly
+        region = region_name(library_key_string)
+        if request.is_sudo(region=region):
+            revoke_sudo_privileges(request, region=region)
         return _display_library(library_key_string, request)
 
     return _list_libraries(request)

@@ -174,6 +174,7 @@ class TestInstructorDashboard(ModuleStoreTestCase, LoginEnrollmentTestCase):
         student_cart.purchase()
 
         self.client.login(username=self.instructor.username, password="test")
+        self.grant_sudo_access(unicode(self.course.id), 'test')
         CourseFinanceAdminRole(self.course.id).add_users(self.instructor)
         single_purchase_total = PaidCourseRegistration.get_total_amount_of_purchased_item(self.course.id)
         bulk_purchase_total = CourseRegCodeItem.get_total_amount_of_purchased_item(self.course.id)
