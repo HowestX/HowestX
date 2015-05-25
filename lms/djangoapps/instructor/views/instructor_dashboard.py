@@ -94,11 +94,14 @@ def instructor_dashboard_2(request, course_id):
         'forum_admin': has_forum_access(request.user, course_key, FORUM_ROLE_ADMINISTRATOR),
     }
 
+    unique_student_identifier = request.GET.get("unique_student_identifier", "")
+    problem_to_reset = request.GET.get("problem_to_reset", "")
+
     sections = [
         _section_course_info(course, access),
         _section_membership(course, access),
         _section_cohort_management(course, access),
-        _section_student_admin(course, access),
+        _section_student_admin(course, access, unique_student_identifier, problem_to_reset),
         _section_data_download(course, access),
         _section_analytics(course, access),
     ]
@@ -386,10 +389,20 @@ def _is_small_course(course_key):
     return is_small_course
 
 
-def _section_student_admin(course, access):
+def _section_student_admin(course, access, unique_student_identifier, problem_to_reset):
     """ Provide data for the corresponding dashboard section """
     course_key = course.id
     is_small_course = _is_small_course(course_key)
+
+    problem_url = None
+    if problem_to_reset:
+        problem_url = reverse(
+            'jump_to',
+            kwargs={
+                'course_id': unicode(course_key),
+                'location': problem_to_reset
+            }
+        )
 
     section_data = {
         'section_key': 'student_admin',
@@ -413,6 +426,9 @@ def _section_student_admin(course, access):
         'list_entrace_exam_instructor_tasks_url': reverse('list_entrance_exam_instructor_tasks',
                                                           kwargs={'course_id': unicode(course_key)}),
         'spoc_gradebook_url': reverse('spoc_gradebook', kwargs={'course_id': unicode(course_key)}),
+        'unique_student_identifier': unique_student_identifier,
+        'problem_to_reset': problem_to_reset,
+        'problem_url': problem_url,
     }
     return section_data
 

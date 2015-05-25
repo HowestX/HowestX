@@ -64,6 +64,11 @@ class @StudentAdmin
     @$request_response_error_ee       = @$section.find ".entrance-exam-grade-container .request-response-error"
     @$request_response_error_all    = @$section.find ".course-specific-container .request-response-error"
 
+    $student_grade_container = find_and_assert @$section, ".student-grade-container"
+    unique_student_identifier = @$field_student_select_grade.val()
+    if unique_student_identifier
+      @scroll_to_section($student_grade_container)
+
     # attach click handlers
 
     # go to student progress page
@@ -370,6 +375,10 @@ class @StudentAdmin
     @$request_response_error_grade.empty()
     @$request_response_error_ee.empty()
     @$request_response_error_all.empty()
+
+
+  scroll_to_section: (element) ->
+    $(window).scrollTop(element.offset().top).scrollLeft(element.offset().left)
 
   # handler for when the section title is clicked.
   onClickTitle: -> @instructor_tasks.task_poller.start()
