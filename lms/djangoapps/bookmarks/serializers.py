@@ -3,14 +3,19 @@ Serializers for Bookmarks.
 """
 from rest_framework import serializers
 
+from . import DEFAULT_FIELDS
 from .models import Bookmark
-from bookmarks import DEFAULT_FIELDS
 
 
 class BookmarkSerializer(serializers.ModelSerializer):
     """
-    Class that serializes the Bookmark model.
+    Serializer for the Bookmark model.
     """
+    id = serializers.SerializerMethodField('resource_id')  # pylint: disable=invalid-name
+    course_id = serializers.Field(source='course_key')
+    usage_id = serializers.Field(source='usage_key')
+    path = serializers.Field(source='path')
+
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields' arg up to the superclass
         try:
@@ -26,18 +31,20 @@ class BookmarkSerializer(serializers.ModelSerializer):
         for field_name in all_fields - required_fields:
             self.fields.pop(field_name)
 
-    id = serializers.SerializerMethodField('resource_id')  # pylint: disable=invalid-name
-    course_id = serializers.Field(source='course_key')
-    usage_id = serializers.Field(source='usage_key')
-    path = serializers.Field(source='path')
-
     class Meta(object):
-        """ Serializer metadata """
+        """ Serializer metadata. """
         model = Bookmark
-        fields = ("id", "course_id", "usage_id", "display_name", "path", "created")
+        fields = (
+            'id',
+            'course_id',
+            'usage_id',
+            'display_name',
+            'path',
+            'created',
+        )
 
     def resource_id(self, bookmark):
         """
-        Return the REST resource id: {username, usage_id}.
+        Return the REST resource id: {username,usage_id}.
         """
         return "{0},{1}".format(bookmark.user.username, bookmark.usage_key)

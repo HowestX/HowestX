@@ -7,7 +7,7 @@ https://openedx.atlassian.net/wiki/display/TNL/Bookmarks+API
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 
 from rest_framework import status
 from rest_framework import permissions
@@ -19,15 +19,12 @@ from rest_framework.views import APIView
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
-from openedx.core.lib.api.serializers import PaginationSerializer
 from openedx.core.lib.api.permissions import IsUserInUrl
+from openedx.core.lib.api.serializers import PaginationSerializer
 
 from xmodule.modulestore.exceptions import ItemNotFoundError
-from xmodule.modulestore.django import modulestore
 
-from bookmarks import DEFAULT_FIELDS, OPTIONAL_FIELDS
-from .api import get_bookmark
-from .models import Bookmark
+from . import DEFAULT_FIELDS, OPTIONAL_FIELDS, api
 from .serializers import BookmarkSerializer
 
 log = logging.getLogger(__name__)
@@ -38,13 +35,32 @@ class BookmarksViewMixin(object):
     Shared code for bookmarks views.
     """
 
-    def parse_optional_field_params(self, request):
+    def fields_to_return(self, params):
         """
-        Parse and returns the fields list.
+        Returns names of fields which should be included in the response.
+
+        Arguments:
+            params (dict): The request parameters.
         """
-        optional_fields_param = request.QUERY_PARAMS.get('fields', [])
-        optional_fields = optional_fields_param.split(',') if optional_fields_param else []
+        optional_fields = params.get('fields', '').split(',')
         return DEFAULT_FIELDS + [field for field in optional_fields if field in OPTIONAL_FIELDS]
+
+    def error_response(self, message, error_status=status.HTTP_400_BAD_REQUEST):
+        """
+        Create and return a Response.
+
+        Arguments:
+            message (string): The message to put in the developer_message
+                and user_message fields.
+            status: The status of the response. Default is HTTP_400_BAD_REQUEST.
+        """
+        return Response(
+            {
+                "developer_message": message,
+                "user_message": _(message)
+            },
+            status=error_status
+        )
 
 
 class BookmarksView(ListCreateAPIView, BookmarksViewMixin):
@@ -95,7 +111,7 @@ class BookmarksView(ListCreateAPIView, BookmarksViewMixin):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
     permission_classes = (permissions.IsAuthenticated,)
 
-    paginate_by = 30
+    paginate_by = 10
     max_paginate_by = 500
     paginate_by_param = 'page_size'
     pagination_serializer_class = PaginationSerializer
@@ -106,87 +122,58 @@ class BookmarksView(ListCreateAPIView, BookmarksViewMixin):
         Return the context for the serializer.
         """
         context = super(BookmarksView, self).get_serializer_context()
-        if self.request.method == 'POST':
-            return context
-        context['fields'] = self.parse_optional_field_params(self.request)
+        if self.request.method == 'GET':
+            context['fields'] = self.fields_to_return(self.request.QUERY_PARAMS)
         return context
 
     def get_queryset(self):
+        """
+        Returns queryset of bookmarks for GET requests.
+
+        The results will only include bookmarks for the request's user.
+        If the course_id is specified in the request parameters,
+        the queryset will only include bookmarks from that course.
+        """
         course_id = self.request.QUERY_PARAMS.get('course_id', None)
 
-        bookmarks_queryset = Bookmark.objects.filter(user=self.request.user)
+        if course_id:
+            try:
+                course_key = CourseKey.from_string(course_id)
+            except InvalidKeyError:
+                log.error(u'Invalid course_id: {course_id}.'.format(course_id=course_id))
+                return []
+        else:
+            course_key = None
 
-        if not course_id:
-            return bookmarks_queryset.order_by('-created')
-        try:
-            course_key = CourseKey.from_string(course_id)
-        except InvalidKeyError:
-            log.error("Invalid course id '{course_id}'")
-            return []
-
-        return bookmarks_queryset.filter(course_key=course_key).order_by('-created')
+        return api.get_bookmarks(user=self.request.user, course_key=course_key, serialized=False)
 
     def post(self, request):
         """
         POST /api/bookmarks/v1/bookmarks/
-        Request data: {"usage_id": "i4x://RiceX/BIOC300.1x/openassessment/cf4c1de230af407fa214905b90aace57"}
+        Request data: {"usage_id": "i4x://RiceX/BIOC300.1x/openassessment/cf4c1de230af407fa21aace57"}
         """
         if not request.DATA:
-            return Response(
-                {
-                    "developer_message": u"request data is missing",
-                    "user_message": _(u"request data is missing")
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return self.error_response(ugettext_noop(u'No data provided.'))
 
         usage_id = request.DATA.get('usage_id', None)
         if not usage_id:
-            return Response(
-                {
-                    "developer_message": u"'usage_id' key is missing",
-                    "user_message": _(u"'usage_id' key is missing")
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return self.error_response(ugettext_noop(u'Parameter usage_id not provided.'))
 
         try:
             usage_key = UsageKey.from_string(usage_id)
-            # course_key may have an empty run property.
-            usage_key = usage_key.replace(course_key=modulestore().fill_in_run(usage_key.course_key))
-            course_key = usage_key.course_key
-
-        except InvalidKeyError as exception:
-            log.error(exception.message)
-            return Response(
-                {
-                    "developer_message": exception.message,
-                    "user_message": _(u"Invalid usage id: '{usage_id}'").format(usage_id=usage_id)
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        bookmarks_data = {
-            "usage_key": usage_key,
-            "course_key": course_key,
-            "user": request.user
-        }
+        except InvalidKeyError:
+            error_message = ugettext_noop(u'Invalid usage_id: {usage_id}.').format(usage_id=usage_id)
+            log.error(error_message)
+            return self.error_response(error_message)
 
         try:
-            bookmark = Bookmark.create(bookmarks_data)
-        except ItemNotFoundError as exception:
-            log.error(exception.message)
-            return Response(
-                {
-                    "developer_message": u"Block with usage_id not found.",
-                    "user_message": _(u"Invalid usage id: '{usage_id}'").format(usage_id=usage_id)
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        return Response(
-            BookmarkSerializer(bookmark, context={"fields": DEFAULT_FIELDS + OPTIONAL_FIELDS}).data,
-            status=status.HTTP_201_CREATED
-        )
+            bookmark = api.create_bookmark(user=self.request.user, usage_key=usage_key)
+        except ItemNotFoundError:
+            error_message = ugettext_noop(u'Block with usage_id: {usage_id} not found.').format(usage_id=usage_id)
+            log.error(error_message)
+            return self.error_response(error_message)
+
+        return Response(bookmark, status=status.HTTP_201_CREATED)
 
 
 class BookmarksDetailView(APIView, BookmarksViewMixin):
@@ -232,71 +219,54 @@ class BookmarksDetailView(APIView, BookmarksViewMixin):
 
     serializer_class = BookmarkSerializer
 
-    # pylint: disable=unused-argument
-    def get(self, request, username=None, usage_id=None):
+    def get_usage_key_or_error_response(self, usage_id):
+        try:
+            return UsageKey.from_string(usage_id)
+        except InvalidKeyError as exception:
+            error_message = ugettext_noop(u'Invalid usage_id: {usage_id}.').format(usage_id=usage_id)
+            log.error(error_message)
+            return self.error_response(error_message)
+
+    def get(self, request, username=None, usage_id=None):  # pylint: disable=unused-argument
         """
         GET /api/bookmarks/v1/bookmarks/{username},{usage_id}?fields=display_name,path
         """
-        try:
-            usage_key = UsageKey.from_string(usage_id)
-        except InvalidKeyError as exception:
-            log.error(exception.message)
-            return Response(
-                {
-                    "developer_message": exception.message,
-                    "user_message": _(u"Invalid usage id: '{usage_id}'").format(usage_id=usage_id)
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        usage_key_or_response = self.get_usage_key_or_error_response(usage_id=usage_id)
+
+        if isinstance(usage_key_or_response, Response):
+            return usage_key_or_response
 
         try:
-            bookmark_data = get_bookmark(
-                request.user,
-                usage_key,
-                fields=self.parse_optional_field_params(self.request),
-                serialized=True
+            bookmark_data = api.get_bookmark(
+                user=request.user,
+                usage_key=usage_key_or_response,
+                fields=self.fields_to_return(request.QUERY_PARAMS)
             )
-        except (ObjectDoesNotExist, MultipleObjectsReturned) as exception:
-            log.error(exception.message)
-            return Response(
-                {
-                    "developer_message": exception.message,
-                    "user_message": _(u"The bookmark does not exist.")
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
+        except ObjectDoesNotExist:
+            error_message = ugettext_noop(
+                u'Bookmark with usage_id: {usage_id} does not exist.'
+            ).format(usage_id=usage_id)
+            log.error(error_message)
+            return self.error_response(error_message, status.HTTP_404_NOT_FOUND)
 
         return Response(bookmark_data)
 
-    # pylint: disable=unused-argument
-    def delete(self, request, username=None, usage_id=None):
+    def delete(self, request, username=None, usage_id=None):  # pylint: disable=unused-argument
         """
         DELETE /api/bookmarks/v1/bookmarks/{username},{usage_id}
         """
-        try:
-            usage_key = UsageKey.from_string(usage_id)
-        except InvalidKeyError as exception:
-            log.error(exception.message)
-            return Response(
-                {
-                    "developer_message": exception.message,
-                    "user_message": _(u"Invalid usage id: '{usage_id}'").format(usage_id=usage_id)
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        usage_key_or_response = self.get_usage_key_or_error_response(usage_id=usage_id)
+
+        if isinstance(usage_key_or_response, Response):
+            return usage_key_or_response
 
         try:
-            bookmark = get_bookmark(request.user, usage_key)
-        except (ObjectDoesNotExist, MultipleObjectsReturned) as exception:
-            log.error(exception.message)
-            return Response(
-                {
-                    "developer_message": exception.message,
-                    "user_message": _(u"The bookmark does not exist.")
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        bookmark.delete()
+            api.delete_bookmark(user=request.user, usage_key=usage_key_or_response)
+        except ObjectDoesNotExist:
+            error_message = ugettext_noop(
+                u'Bookmark with usage_id: {usage_id} does not exist.'
+            ).format(usage_id=usage_id)
+            log.error(error_message)
+            return self.error_response(error_message, status.HTTP_404_NOT_FOUND)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

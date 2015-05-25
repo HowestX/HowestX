@@ -1,13 +1,13 @@
 """
-Model(s) for Bookmarks.
+Models for Bookmarks.
 """
 
 from django.contrib.auth.models import User
 from django.db import models
 
 from jsonfield.fields import JSONField
-
 from model_utils.models import TimeStampedModel
+
 from xmodule.modulestore.django import modulestore
 from xmodule_django.models import CourseKeyField, LocationKeyField
 
@@ -19,28 +19,45 @@ class Bookmark(TimeStampedModel):
     user = models.ForeignKey(User, db_index=True)
     course_key = CourseKeyField(max_length=255, db_index=True)
     usage_key = LocationKeyField(max_length=255, db_index=True)
-    display_name = models.CharField(max_length=255, default="", help_text="Display name of XBlock")
-    path = JSONField()  # "JSON, breadcrumbs to the XBlock"
+    display_name = models.CharField(max_length=255, default='', help_text='Display name of block')
+    path = JSONField(help_text='Path in course tree to the block')
 
     @classmethod
-    def create(cls, bookmarks_data, block=None):
+    def create(cls, bookmark_data):
         """
-        Create a bookmark object.
+        Create a Bookmark object.
+
+        Arguments:
+            bookmark_data (dict): The data to create the object with.
+
+        Returns:
+            A Bookmark object.
+
+        Raises:
+            ItemNotFoundError: If no block exists for the usage_key.
         """
-        if not block:
-            block = modulestore().get_item(bookmarks_data['usage_key'])
+        usage_key = bookmark_data['usage_key']
+        usage_key = usage_key.replace(course_key=modulestore().fill_in_run(usage_key.course_key))
 
-        bookmarks_data['display_name'] = block.display_name
-        bookmarks_data['path'] = cls.get_path(block)
+        block = modulestore().get_item(usage_key)
 
-        bookmark, __ = cls.objects.get_or_create(**bookmarks_data)
+        bookmark_data['course_key'] = usage_key.course_key
+        bookmark_data['display_name'] = block.display_name
+        bookmark_data['path'] = cls.get_path(block)
+
+        bookmark, __ = cls.objects.get_or_create(**bookmark_data)
         return bookmark
 
     @staticmethod
     def get_path(block):
         """
-        Returns List of dicts containing {"usage_id": "", display_name:""} for the XBlocks
-        from the top of the course tree till the parent of the bookmarked XBlock.
+        Returns data for the path to the block in the course tree.
+
+        Arguments:
+            block (XBlock): The block whose path is required.
+
+        Returns:
+            list of dicts of the form {'usage_id': <usage_id>, 'display_name': <display_name>}.
         """
         parent = block.get_parent()
         parents_data = []
@@ -49,5 +66,6 @@ class Bookmark(TimeStampedModel):
             if parent.location.block_type not in ['vertical']:  # we already have info for vertical.
                 parents_data.append({"display_name": parent.display_name, "usage_id": unicode(parent.location)})
             parent = parent.get_parent()
+
         parents_data.reverse()
         return parents_data

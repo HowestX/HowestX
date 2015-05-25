@@ -9,18 +9,18 @@ from .views import BookmarksView, BookmarksDetailView
 
 
 urlpatterns = patterns(
-    "bookmarks",
+    'bookmarks',
     url(
-        r"^v1/bookmarks/$",
+        r'^v1/bookmarks/$',
         BookmarksView.as_view(),
-        name="bookmarks"
+        name='bookmarks'
     ),
     url(
-        r"^v1/bookmarks/{username},{usage_key}/$".format(
+        r'^v1/bookmarks/{username},{usage_key}/$'.format(
             username=settings.USERNAME_PATTERN,
             usage_key=settings.USAGE_ID_PATTERN
         ),
         BookmarksDetailView.as_view(),
-        name="bookmarks_detail"
+        name='bookmarks_detail'
     ),
 )

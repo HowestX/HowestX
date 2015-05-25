@@ -18,9 +18,9 @@ from .factories import BookmarkFactory
 
 class BookmarksViewTestsMixin(ModuleStoreTestCase):
     """
-    Mixin for bookmark view tests.
+    Mixin for bookmarks views tests.
     """
-    test_password = "test"
+    test_password = 'test'
 
     def setUp(self):
         super(BookmarksViewTestsMixin, self).setUp()
@@ -46,10 +46,10 @@ class BookmarksViewTestsMixin(ModuleStoreTestCase):
         self.course_id = unicode(self.course.id)
 
         chapter_1 = ItemFactory.create(
-            parent_location=self.course.location, category='chapter', display_name="Week 1"
+            parent_location=self.course.location, category='chapter', display_name='Week 1'
         )
         sequential_1 = ItemFactory.create(
-            parent_location=chapter_1.location, category='sequential', display_name="Lesson 1"
+            parent_location=chapter_1.location, category='sequential', display_name='Lesson 1'
         )
         self.vertical_1 = ItemFactory.create(
             parent_location=sequential_1.location, category='vertical', display_name='Subsection 1'
@@ -61,10 +61,10 @@ class BookmarksViewTestsMixin(ModuleStoreTestCase):
             display_name=self.vertical_1.display_name
         )
         chapter_2 = ItemFactory.create(
-            parent_location=self.course.location, category='chapter', display_name="Week 2"
+            parent_location=self.course.location, category='chapter', display_name='Week 2'
         )
         sequential_2 = ItemFactory.create(
-            parent_location=chapter_2.location, category='sequential', display_name="Lesson 2"
+            parent_location=chapter_2.location, category='sequential', display_name='Lesson 2'
         )
         vertical_2 = ItemFactory.create(
             parent_location=sequential_2.location, category='vertical', display_name='Subsection 2'
@@ -81,10 +81,10 @@ class BookmarksViewTestsMixin(ModuleStoreTestCase):
         # Other Course
         self.other_course = CourseFactory.create(display_name='An Introduction to API Testing 2')
         other_chapter = ItemFactory.create(
-            parent_location=self.other_course.location, category='chapter', display_name="Other Week 1"
+            parent_location=self.other_course.location, category='chapter', display_name='Other Week 1'
         )
         other_sequential = ItemFactory.create(
-            parent_location=other_chapter.location, category='sequential', display_name="Other Lesson 1"
+            parent_location=other_chapter.location, category='sequential', display_name='Other Lesson 1'
         )
         self.other_vertical = ItemFactory.create(
             parent_location=other_sequential.location, category='vertical', display_name='Other Subsection 1'
@@ -100,14 +100,14 @@ class BookmarksViewTestsMixin(ModuleStoreTestCase):
         """
         Determines if the given response data (dict) matches the specified bookmark.
         """
-        self.assertEqual(response_data['id'], "%s,%s" % (self.user.username, unicode(bookmark.usage_key)))
-        self.assertEqual(response_data['usage_id'], unicode(bookmark.usage_key))
+        self.assertEqual(response_data['id'], '%s,%s' % (self.user.username, unicode(bookmark.usage_key)))
         self.assertEqual(response_data['course_id'], unicode(bookmark.course_key))
-        self.assertIsNotNone(response_data["created"])
+        self.assertEqual(response_data['usage_id'], unicode(bookmark.usage_key))
+        self.assertIsNotNone(response_data['created'])
 
         if optional_fields:
-            self.assertEqual(response_data['path'], bookmark.path)
             self.assertEqual(response_data['display_name'], bookmark.display_name)
+            self.assertEqual(response_data['path'], bookmark.path)
 
     def send_get(self, client, url, query_parameters=None, expected_status=200):
         """
@@ -118,12 +118,11 @@ class BookmarksViewTestsMixin(ModuleStoreTestCase):
         self.assertEqual(expected_status, response.status_code)
         return response
 
-    def send_post(self, client, url, json_data, content_type="application/json", expected_status=201):
+    def send_post(self, client, url, data, content_type='application/json', expected_status=201):
         """
         Helper method for sending a POST to the server. Verifies the expected status and returns the response.
         """
-        url = url + '?course_id={}'.format(self.course_id)
-        response = client.post(url, data=json.dumps(json_data), content_type=content_type)
+        response = client.post(url, data=json.dumps(data), content_type=content_type)
         self.assertEqual(expected_status, response.status_code)
         return response
 
@@ -141,11 +140,11 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
     """
     This contains the tests for GET & POST methods of bookmark.views.BookmarksView class
     GET /api/bookmarks/v0/bookmarks/?course_id={course_id1}
-    POST /api/bookmarks/v0/bookmarks/?course_id={course_id1}
+    POST /api/bookmarks/v0/bookmarks
     """
     @ddt.data(
-        ("course_id={}", False),
-        ("course_id={}&fields=path,display_name", True),
+        ('course_id={}', False),
+        ('course_id={}&fields=path,display_name', True),
     )
     @ddt.unpack
     def test_get_bookmarks_successfully(self, query_params, check_optionals):
@@ -188,7 +187,7 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
 
     def test_get_bookmarks_with_invalid_data(self):
         """
-        Test that requesting bookmarks with invalid data returns a 0 records.
+        Test that requesting bookmarks with invalid data returns 0 records.
         """
         # Invalid course id.
         response = self.send_get(client=self.client, url=reverse('bookmarks'), query_parameters='course_id=invalid')
@@ -221,7 +220,7 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
         self.send_post(
             client=self.anonymous_client,
             url=reverse('bookmarks'),
-            json_data={"usage_id": "test"},
+            data={'usage_id': 'test'},
             expected_status=401
         )
 
@@ -232,11 +231,11 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
         response = self.send_post(
             client=self.client,
             url=reverse('bookmarks'),
-            json_data={'usage_id': unicode(self.vertical_3.location)}
+            data={'usage_id': unicode(self.vertical_3.location)}
         )
 
         # Assert Newly created bookmark.
-        self.assertEqual(response.data['id'], "%s,%s" % (self.user.username, unicode(self.vertical_3.location)))
+        self.assertEqual(response.data['id'], '%s,%s' % (self.user.username, unicode(self.vertical_3.location)))
         self.assertEqual(response.data['course_id'], self.course_id)
         self.assertEqual(response.data['usage_id'], unicode(self.vertical_3.location))
         self.assertIsNotNone(response.data['created'])
@@ -255,30 +254,30 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
         response = self.send_post(
             client=self.client,
             url=reverse('bookmarks'),
-            json_data={'usage_id': 'invalid'},
+            data={'usage_id': 'invalid'},
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], u"Invalid usage id: 'invalid'")
+        self.assertEqual(response.data['user_message'], u'Invalid usage_id: invalid.')
 
         # Send data without usage_id.
         response = self.send_post(
             client=self.client,
             url=reverse('bookmarks'),
-            json_data={'course_id': 'invalid'},
+            data={'course_id': 'invalid'},
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], u"'usage_id' key is missing")
-        self.assertEqual(response.data['developer_message'], u"'usage_id' key is missing")
+        self.assertEqual(response.data['user_message'], u'Parameter usage_id not provided.')
+        self.assertEqual(response.data['developer_message'], u'Parameter usage_id not provided.')
 
         # Send empty data dictionary.
         response = self.send_post(
             client=self.client,
             url=reverse('bookmarks'),
-            json_data={},
+            data={},
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], u"request data is missing")
-        self.assertEqual(response.data['developer_message'], u"request data is missing")
+        self.assertEqual(response.data['user_message'], u'No data provided.')
+        self.assertEqual(response.data['developer_message'], u'No data provided.')
 
     def test_post_bookmark_for_non_existing_block(self):
         """
@@ -287,14 +286,17 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
         response = self.send_post(
             client=self.client,
             url=reverse('bookmarks'),
-            json_data={'usage_id': 'i4x://arbi/100/html/340ef1771a094090ad260ec940d04a21'},
+            data={'usage_id': 'i4x://arbi/100/html/340ef1771a094090ad260ec940d04a21'},
             expected_status=400
         )
         self.assertEqual(
             response.data['user_message'],
-            u"Invalid usage id: 'i4x://arbi/100/html/340ef1771a094090ad260ec940d04a21'"
+            u'Block with usage_id: i4x://arbi/100/html/340ef1771a094090ad260ec940d04a21 not found.'
         )
-        self.assertEqual(response.data['developer_message'], "Block with usage_id not found.")
+        self.assertEqual(
+            response.data['developer_message'],
+            u'Block with usage_id: i4x://arbi/100/html/340ef1771a094090ad260ec940d04a21 not found.'
+        )
 
     def test_unsupported_methods(self):
         """
@@ -356,8 +358,14 @@ class BookmarksDetailViewTests(BookmarksViewTestsMixin):
             ),
             expected_status=404
         )
-        self.assertEqual(response.data['user_message'], "The bookmark does not exist.")
-        self.assertEqual(response.data['developer_message'], "Bookmark matching query does not exist.")
+        self.assertEqual(
+            response.data['user_message'],
+            'Bookmark with usage_id: i4x://arbi/100/html/340ef1771a0940 does not exist.'
+        )
+        self.assertEqual(
+            response.data['developer_message'],
+            'Bookmark with usage_id: i4x://arbi/100/html/340ef1771a0940 does not exist.'
+        )
 
     def test_get_bookmark_with_invalid_usage_id(self):
         """
@@ -371,7 +379,7 @@ class BookmarksDetailViewTests(BookmarksViewTestsMixin):
             ),
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], u"Invalid usage id: 'i4x'")
+        self.assertEqual(response.data['user_message'], u'Invalid usage_id: i4x.')
 
     def test_anonymous_access(self):
         """
@@ -436,8 +444,14 @@ class BookmarksDetailViewTests(BookmarksViewTestsMixin):
             ),
             expected_status=404
         )
-        self.assertEqual(response.data['user_message'], "The bookmark does not exist.")
-        self.assertEqual(response.data['developer_message'], "Bookmark matching query does not exist.")
+        self.assertEqual(
+            response.data['user_message'],
+            u'Bookmark with usage_id: i4x://arbi/100/html/340ef1771a0940 does not exist.'
+        )
+        self.assertEqual(
+            response.data['developer_message'],
+            'Bookmark with usage_id: i4x://arbi/100/html/340ef1771a0940 does not exist.'
+        )
 
     def test_delete_bookmark_with_invalid_usage_id(self):
         """
@@ -451,7 +465,7 @@ class BookmarksDetailViewTests(BookmarksViewTestsMixin):
             ),
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], u"Invalid usage id: 'i4x'")
+        self.assertEqual(response.data['user_message'], u'Invalid usage_id: i4x.')
 
     def test_unsupported_methods(self):
         """
