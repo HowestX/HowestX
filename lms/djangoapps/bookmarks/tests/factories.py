@@ -1,5 +1,5 @@
 """
-Provides factories for Bookmark models.
+Factories for Bookmark models.
 """
 
 from factory.django import DjangoModelFactory

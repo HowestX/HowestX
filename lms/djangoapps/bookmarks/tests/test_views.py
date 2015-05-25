@@ -1,9 +1,9 @@
 """
-This file includes the tests for bookmark views.
+Tests for bookmark views.
 """
 
+import ddt
 import json
-
 from django.core.urlresolvers import reverse
 from rest_framework.test import APIClient
 
@@ -78,6 +78,23 @@ class BookmarksViewTestsMixin(ModuleStoreTestCase):
             usage_key=vertical_2.location,
             display_name=vertical_2.display_name
         )
+        # Other Course
+        self.other_course = CourseFactory.create(display_name='An Introduction to API Testing 2')
+        other_chapter = ItemFactory.create(
+            parent_location=self.other_course.location, category='chapter', display_name="Other Week 1"
+        )
+        other_sequential = ItemFactory.create(
+            parent_location=other_chapter.location, category='sequential', display_name="Other Lesson 1"
+        )
+        self.other_vertical = ItemFactory.create(
+            parent_location=other_sequential.location, category='vertical', display_name='Other Subsection 1'
+        )
+        self.other_bookmark = BookmarkFactory.create(
+            user=self.user,
+            course_key=unicode(self.other_course.id),
+            usage_key=self.other_vertical.location,
+            display_name=self.other_vertical.display_name
+        )
 
     def assert_valid_bookmark_response(self, response_data, bookmark, optional_fields=False):
         """
@@ -119,19 +136,28 @@ class BookmarksViewTestsMixin(ModuleStoreTestCase):
         return response
 
 
+@ddt.ddt
 class BookmarksViewTests(BookmarksViewTestsMixin):
     """
     This contains the tests for GET & POST methods of bookmark.views.BookmarksView class
     GET /api/bookmarks/v0/bookmarks/?course_id={course_id1}
     POST /api/bookmarks/v0/bookmarks/?course_id={course_id1}
     """
-    def test_get_bookmarks_successfully(self):
+    @ddt.data(
+        ("course_id={}", False),
+        ("course_id={}&fields=path,display_name", True),
+    )
+    @ddt.unpack
+    def test_get_bookmarks_successfully(self, query_params, check_optionals):
         """
         Test that requesting bookmarks for a course returns records successfully in
         expected order without optional fields.
         """
-        query_parameters = 'course_id={}'.format(self.course_id)
-        response = self.send_get(client=self.client, url=reverse('bookmarks'), query_parameters=query_parameters)
+        response = self.send_get(
+            client=self.client,
+            url=reverse('bookmarks'),
+            query_parameters=query_params.format(self.course_id)
+        )
 
         bookmarks = response.data['results']
 
@@ -140,27 +166,8 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
         self.assertEqual(response.data['num_pages'], 1)
 
         # As bookmarks are sorted by -created so we will compare in that order.
-        self.assert_valid_bookmark_response(bookmarks[0], self.bookmark_2)
-        self.assert_valid_bookmark_response(bookmarks[1], self.bookmark_1)
-
-    def test_get_bookmarks_with_optional_fields(self):
-        """
-        Test that requesting bookmarks for a course returns records successfully in
-        expected order with optional fields.
-        """
-        query_parameters = 'course_id={}&fields=path,display_name'.format(self.course_id)
-
-        response = self.send_get(client=self.client, url=reverse('bookmarks'), query_parameters=query_parameters)
-        data = response.data
-        bookmarks = data['results']
-
-        self.assertEqual(len(bookmarks), 2)
-        self.assertEqual(data['count'], 2)
-        self.assertEqual(data['num_pages'], 1)
-
-        # As bookmarks are sorted by -created so we will compare in that order.
-        self.assert_valid_bookmark_response(bookmarks[0], self.bookmark_2, optional_fields=True)
-        self.assert_valid_bookmark_response(bookmarks[1], self.bookmark_1, optional_fields=True)
+        self.assert_valid_bookmark_response(bookmarks[0], self.bookmark_2, optional_fields=check_optionals)
+        self.assert_valid_bookmark_response(bookmarks[1], self.bookmark_1, optional_fields=check_optionals)
 
     def test_get_bookmarks_with_pagination(self):
         """
@@ -188,16 +195,17 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
         bookmarks = response.data['results']
         self.assertEqual(len(bookmarks), 0)
 
-    def test_get_all_bookmarks_when_course_id_not_give(self):
+    def test_get_all_bookmarks_when_course_id_not_given(self):
         """
         Test that requesting bookmarks returns all records for that user.
         """
         # Without course id we would return all the bookmarks for that user.
         response = self.send_get(client=self.client, url=reverse('bookmarks'))
         bookmarks = response.data['results']
-        self.assertEqual(len(bookmarks), 2)
-        self.assert_valid_bookmark_response(bookmarks[0], self.bookmark_2)
-        self.assert_valid_bookmark_response(bookmarks[1], self.bookmark_1)
+        self.assertEqual(len(bookmarks), 3)
+        self.assert_valid_bookmark_response(bookmarks[0], self.other_bookmark)
+        self.assert_valid_bookmark_response(bookmarks[1], self.bookmark_2)
+        self.assert_valid_bookmark_response(bookmarks[2], self.bookmark_1)
 
     def test_anonymous_access(self):
         """
@@ -232,6 +240,8 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
         self.assertEqual(response.data['course_id'], self.course_id)
         self.assertEqual(response.data['usage_id'], unicode(self.vertical_3.location))
         self.assertIsNotNone(response.data['created'])
+        self.assertEqual(len(response.data['path']), 2)
+        self.assertEqual(response.data['display_name'], self.vertical_3.display_name)
 
     def test_post_bookmark_with_invalid_data(self):
         """
@@ -248,8 +258,7 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
             json_data={'usage_id': 'invalid'},
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], "Invalid usage id")
-        self.assertEqual(response.data['developer_message'], "Invalid usage id")
+        self.assertEqual(response.data['user_message'], u"Invalid usage id: 'invalid'")
 
         # Send data without usage_id.
         response = self.send_post(
@@ -258,8 +267,8 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
             json_data={'course_id': 'invalid'},
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], "No usage id provided")
-        self.assertEqual(response.data['developer_message'], "No usage id provided")
+        self.assertEqual(response.data['user_message'], u"'usage_id' key is missing")
+        self.assertEqual(response.data['developer_message'], u"'usage_id' key is missing")
 
         # Send empty data dictionary.
         response = self.send_post(
@@ -268,8 +277,8 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
             json_data={},
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], "No data provided")
-        self.assertEqual(response.data['developer_message'], "No data provided")
+        self.assertEqual(response.data['user_message'], u"request data is missing")
+        self.assertEqual(response.data['developer_message'], u"request data is missing")
 
     def test_post_bookmark_for_non_existing_block(self):
         """
@@ -281,7 +290,10 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
             json_data={'usage_id': 'i4x://arbi/100/html/340ef1771a094090ad260ec940d04a21'},
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], "Invalid usage id")
+        self.assertEqual(
+            response.data['user_message'],
+            u"Invalid usage id: 'i4x://arbi/100/html/340ef1771a094090ad260ec940d04a21'"
+        )
         self.assertEqual(response.data['developer_message'], "Block with usage_id not found.")
 
     def test_unsupported_methods(self):
@@ -293,11 +305,17 @@ class BookmarksViewTests(BookmarksViewTestsMixin):
         self.assertEqual(405, self.client.delete(reverse('bookmarks')).status_code)
 
 
+@ddt.ddt
 class BookmarksDetailViewTests(BookmarksViewTestsMixin):
     """
     This contains the tests for GET & DELETE methods of bookmark.views.BookmarksDetailView class
     """
-    def test_get_bookmark_successfully(self):
+    @ddt.data(
+        ('', False),
+        ('fields=path,display_name', True)
+    )
+    @ddt.unpack
+    def test_get_bookmark_successfully(self, query_params, check_optionals):
         """
         Test that requesting bookmark returns data with 200 code.
         """
@@ -306,29 +324,12 @@ class BookmarksDetailViewTests(BookmarksViewTestsMixin):
             url=reverse(
                 'bookmarks_detail',
                 kwargs={'username': self.user.username, 'usage_id': unicode(self.vertical_1.location)}
-            )
-        )
-        data = response.data
-        self.assertIsNotNone(data)
-        self.assert_valid_bookmark_response(data, self.bookmark_1)
-
-    def test_get_bookmark_with_optional_fields(self):
-        """
-        Test that requesting bookmark with optional fields returns data with 200 status code.
-        """
-        query_parameters = 'course_id={}&fields=path,display_name'.format(self.course_id)
-
-        response = self.send_get(
-            client=self.client,
-            url=reverse(
-                'bookmarks_detail',
-                kwargs={'username': self.user.username, 'usage_id': unicode(self.vertical_1.location)}
             ),
-            query_parameters=query_parameters
+            query_parameters=query_params
         )
         data = response.data
         self.assertIsNotNone(data)
-        self.assert_valid_bookmark_response(data, self.bookmark_1, optional_fields=True)
+        self.assert_valid_bookmark_response(data, self.bookmark_1, optional_fields=check_optionals)
 
     def test_get_bookmark_that_belongs_to_other_user(self):
         """
@@ -370,7 +371,7 @@ class BookmarksDetailViewTests(BookmarksViewTestsMixin):
             ),
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], "Invalid usage id")
+        self.assertEqual(response.data['user_message'], u"Invalid usage id: 'i4x'")
 
     def test_anonymous_access(self):
         """
@@ -450,7 +451,7 @@ class BookmarksDetailViewTests(BookmarksViewTestsMixin):
             ),
             expected_status=400
         )
-        self.assertEqual(response.data['user_message'], "Invalid usage id")
+        self.assertEqual(response.data['user_message'], u"Invalid usage id: 'i4x'")
 
     def test_unsupported_methods(self):
         """

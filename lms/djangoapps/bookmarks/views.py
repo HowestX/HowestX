@@ -20,35 +20,50 @@ from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
 from openedx.core.lib.api.serializers import PaginationSerializer
+from openedx.core.lib.api.permissions import IsUserInUrl
 
 from xmodule.modulestore.exceptions import ItemNotFoundError
 from xmodule.modulestore.django import modulestore
 
+from bookmarks import DEFAULT_FIELDS, OPTIONAL_FIELDS
 from .api import get_bookmark
 from .models import Bookmark
 from .serializers import BookmarkSerializer
 
-
 log = logging.getLogger(__name__)
 
-DEFAULT_FIELDS = ["id", "course_id", "usage_id", "created"]
-OPTIONAL_FIELDS = ['display_name', 'path']
+
+class BookmarksViewMixin(object):
+    """
+    Shared code for bookmarks views.
+    """
+
+    def parse_optional_field_params(self, request):
+        """
+        Parse and returns the fields list.
+        """
+        optional_fields_param = request.QUERY_PARAMS.get('fields', [])
+        optional_fields = optional_fields_param.split(',') if optional_fields_param else []
+        return DEFAULT_FIELDS + [field for field in optional_fields if field in OPTIONAL_FIELDS]
 
 
-class BookmarksView(ListCreateAPIView):
+class BookmarksView(ListCreateAPIView, BookmarksViewMixin):
     """
     **Use Case**
 
-        Get a paginated list of bookmarks in particular course.
+        Get a paginated list of bookmarks, across all the courses, ordered by creation time.
+        You can also filter the bookmarks by course_id.
+
         Each page in the list can contain up to 30 bookmarks by default.
 
         Create/Post a new bookmark for particular Xblock.
 
     **Example Requests**
 
-          GET /api/bookmarks/v1/bookmarks/?course_id={course_id1}
+          GET /api/bookmarks/v1/bookmarks/?course_id={course_id1}&fields=display_name,path
 
           POST /api/bookmarks/v1/bookmarks/
+          Request data: {"usage_id": "i4x://RiceX/BIOC300.1x/openassessment/cf4c1de230af407fa214905b90aace57"}
 
     **Response Values**
 
@@ -93,9 +108,7 @@ class BookmarksView(ListCreateAPIView):
         context = super(BookmarksView, self).get_serializer_context()
         if self.request.method == 'POST':
             return context
-        optional_fields_param = self.request.QUERY_PARAMS.get('fields', [])
-        optional_fields = optional_fields_param.split(',') if optional_fields_param else []
-        context['fields'] = DEFAULT_FIELDS + [field for field in optional_fields if field in OPTIONAL_FIELDS]
+        context['fields'] = self.parse_optional_field_params(self.request)
         return context
 
     def get_queryset(self):
@@ -116,44 +129,42 @@ class BookmarksView(ListCreateAPIView):
     def post(self, request):
         """
         POST /api/bookmarks/v1/bookmarks/
+        Request data: {"usage_id": "i4x://RiceX/BIOC300.1x/openassessment/cf4c1de230af407fa214905b90aace57"}
         """
         if not request.DATA:
-            error_message = _("No data provided")
             return Response(
                 {
-                    "developer_message": error_message,
-                    "user_message": error_message
+                    "developer_message": u"request data is missing",
+                    "user_message": _(u"request data is missing")
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         usage_id = request.DATA.get('usage_id', None)
         if not usage_id:
-            error_message = _('No usage id provided')
             return Response(
                 {
-                    "developer_message": error_message,
-                    "user_message": error_message
+                    "developer_message": u"'usage_id' key is missing",
+                    "user_message": _(u"'usage_id' key is missing")
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
             usage_key = UsageKey.from_string(usage_id)
-        except InvalidKeyError as exception:
-            log.error(exception.message)
-            message = _(u"Invalid usage id")
-            return Response(
-                {
-                    "developer_message": message,
-                    "user_message": message
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        else:
             # course_key may have an empty run property.
             usage_key = usage_key.replace(course_key=modulestore().fill_in_run(usage_key.course_key))
             course_key = usage_key.course_key
+
+        except InvalidKeyError as exception:
+            log.error(exception.message)
+            return Response(
+                {
+                    "developer_message": exception.message,
+                    "user_message": _(u"Invalid usage id: '{usage_id}'").format(usage_id=usage_id)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         bookmarks_data = {
             "usage_key": usage_key,
@@ -168,7 +179,7 @@ class BookmarksView(ListCreateAPIView):
             return Response(
                 {
                     "developer_message": u"Block with usage_id not found.",
-                    "user_message": _(u"Invalid usage id")
+                    "user_message": _(u"Invalid usage id: '{usage_id}'").format(usage_id=usage_id)
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -178,7 +189,7 @@ class BookmarksView(ListCreateAPIView):
         )
 
 
-class BookmarksDetailView(APIView):
+class BookmarksDetailView(APIView, BookmarksViewMixin):
     """
     **Use Cases**
 
@@ -186,7 +197,7 @@ class BookmarksDetailView(APIView):
 
     **Example Requests**:
 
-        GET /api/bookmarks/v1/bookmarks/{username},{usage_id}/?fields=path&display_name
+        GET /api/bookmarks/v1/bookmarks/{username},{usage_id}/?fields=display_name,path
 
         DELETE /api/bookmarks/v1/bookmarks/{username},{usage_id}/
 
@@ -217,22 +228,15 @@ class BookmarksDetailView(APIView):
 
     """
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, IsUserInUrl)
 
     serializer_class = BookmarkSerializer
 
+    # pylint: disable=unused-argument
     def get(self, request, username=None, usage_id=None):
         """
-        GET /api/bookmarks/v1/bookmarks/{username},{usage_id}?fields=path&display_name
+        GET /api/bookmarks/v1/bookmarks/{username},{usage_id}?fields=display_name,path
         """
-        if request.user.username != username:
-            # Return a 404. If one user is looking up the other users.
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        optional_fields_param = self.request.QUERY_PARAMS.get('fields', [])
-        optional_fields = optional_fields_param.split(',') if optional_fields_param else []
-        optional_fields_to_add = DEFAULT_FIELDS + [field for field in optional_fields if field in OPTIONAL_FIELDS]
-
         try:
             usage_key = UsageKey.from_string(usage_id)
         except InvalidKeyError as exception:
@@ -240,16 +244,16 @@ class BookmarksDetailView(APIView):
             return Response(
                 {
                     "developer_message": exception.message,
-                    "user_message": _(u"Invalid usage id")
+                    "user_message": _(u"Invalid usage id: '{usage_id}'").format(usage_id=usage_id)
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
-            bookmarks_data = get_bookmark(
+            bookmark_data = get_bookmark(
                 request.user,
                 usage_key,
-                fields=optional_fields_to_add,
+                fields=self.parse_optional_field_params(self.request),
                 serialized=True
             )
         except (ObjectDoesNotExist, MultipleObjectsReturned) as exception:
@@ -257,21 +261,18 @@ class BookmarksDetailView(APIView):
             return Response(
                 {
                     "developer_message": exception.message,
-                    "user_message": _(u'The bookmark does not exist.')
+                    "user_message": _(u"The bookmark does not exist.")
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        return Response(bookmarks_data)
+        return Response(bookmark_data)
 
+    # pylint: disable=unused-argument
     def delete(self, request, username=None, usage_id=None):
         """
         DELETE /api/bookmarks/v1/bookmarks/{username},{usage_id}
         """
-        if request.user.username != username:
-            # Return a 404. If one user is looking up the other users.
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
         try:
             usage_key = UsageKey.from_string(usage_id)
         except InvalidKeyError as exception:
@@ -279,7 +280,7 @@ class BookmarksDetailView(APIView):
             return Response(
                 {
                     "developer_message": exception.message,
-                    "user_message": _(u"Invalid usage id")
+                    "user_message": _(u"Invalid usage id: '{usage_id}'").format(usage_id=usage_id)
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -291,7 +292,7 @@ class BookmarksDetailView(APIView):
             return Response(
                 {
                     "developer_message": exception.message,
-                    "user_message": _(u'The bookmark does not exist.')
+                    "user_message": _(u"The bookmark does not exist.")
                 },
                 status=status.HTTP_404_NOT_FOUND
             )

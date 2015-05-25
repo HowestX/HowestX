@@ -1,5 +1,5 @@
 """
-This File contains Model for Bookmarks.
+Model(s) for Bookmarks.
 """
 
 from django.contrib.auth.models import User
@@ -46,8 +46,8 @@ class Bookmark(TimeStampedModel):
         parents_data = []
 
         while parent is not None and parent.location.block_type not in ['course']:
-            parents_data.append({"display_name": parent.display_name, "usage_id": unicode(parent.location)})
+            if parent.location.block_type not in ['vertical']:  # we already have info for vertical.
+                parents_data.append({"display_name": parent.display_name, "usage_id": unicode(parent.location)})
             parent = parent.get_parent()
-        parents_data = parents_data[:2]  # To exclude the unit/vertical block information.
         parents_data.reverse()
         return parents_data

@@ -1,5 +1,5 @@
 """
-This File contains bookmark api method(s).
+Bookmarks api methods.
 """
 
 from bookmarks.serializers import BookmarkSerializer
@@ -12,12 +12,13 @@ def get_bookmark(user, usage_key, fields=None, serialized=False):
 
     Args:
         user (User): The user requesting the bookmark.
-        fields_to_add (list): List of fields to return for a bookmark.
         usage_key (UsageKey): The usage id of an Xblock.
-        serialized (Bool): Decides to return object or json.
+        fields (list): (optional) List of fields to return for a bookmark.
+        serialized (Bool): (optional) Returns JSON serialized version of bookmark if its True
+            otherwise it returns bookmark object (default is False).
 
     Returns:
-         A dict or object containing bookmark data.
+         A JSON serialized dict or object containing bookmark data.
 
     Raises:
          ObjectDoesNotExit: If Bookmark object does not exist.
