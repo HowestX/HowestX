@@ -112,7 +112,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                     % if order.company_name:
                       ${order.company_name}
                     % else:
-                      N/A
+                      ${_('N/A')}
                     % endif
                   </label>
                 </p>
@@ -124,7 +124,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                     % if order.customer_reference_number:
                       ${order.customer_reference_number}
                     % else:
-                      N/A
+                      ${_('N/A')}
                     % endif
                   </label>
                 </p>
@@ -136,7 +136,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                     % if order.company_contact_name:
                       ${order.company_contact_name}
                     % else:
-                      N/A
+                      ${_('N/A')}
                     % endif
                   </label>
                 </p>
@@ -148,7 +148,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                     % if order.company_contact_email:
                       ${order.company_contact_email}
                     % else:
-                      N/A
+                      ${_('N/A')}
                     % endif
                   </label>
                 </p>
@@ -160,7 +160,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                     % if order.recipient_name:
                       ${order.recipient_name}
                     % else:
-                      N/A
+                      ${_('N/A')}
                     % endif
                   </label>
                 </p>
@@ -172,7 +172,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                     % if order.recipient_email:
                       ${order.recipient_email}
                     % else:
-                      N/A
+                      ${_('N/A')}
                     % endif
                   </label>
                 </p>
@@ -185,9 +185,9 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                 <b>${_('Card Type')}:</b>
                 <label>
                   % if order.bill_to_cardtype:
-                    ${order.bill_to_cardtype}
+                    ${_('{bill_to_cardtype}'.format(bill_to_cardtype=order.bill_to_cardtype))}
                   % else:
-                    N/A
+                    ${_('N/A')}
                   % endif
                 </label>
               </p>
@@ -199,7 +199,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                   % if order.bill_to_ccnum:
                     ${order.bill_to_ccnum}
                   % else:
-                    N/A
+                    ${_('N/A')}
                   % endif
                 </label>
               </p>
@@ -211,7 +211,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                   % if order.bill_to_first or order.bill_to_last:
                     ${order.bill_to_first} ${order.bill_to_last}
                   % else:
-                    N/A
+                    ${_('N/A')}
                   % endif
                 </label>
               </p>
@@ -223,7 +223,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                   % if order.bill_to_street1:
                     ${order.bill_to_street1}
                   % else:
-                    N/A
+                    ${_('N/A')}
                   % endif
                 </label>
               </p>
@@ -235,7 +235,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                   % if order.bill_to_street2:
                     ${order.bill_to_street2}
                   % else:
-                    N/A
+                    ${_('N/A')}
                   % endif
                 </label>
               </p>
@@ -247,7 +247,7 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                   % if order.bill_to_city:
                     ${order.bill_to_city}
                   % else:
-                    N/A
+                    ${_('N/A')}
                   % endif
                 </label>
               </p>
@@ -257,9 +257,9 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                 <b>${_('State')}:</b>
                 <label>
                   % if order.bill_to_state:
-                    ${order.bill_to_state}
+                    ${_('{bill_to_state}'.format(bill_to_state=order.bill_to_state))}
                   % else:
-                    N/A
+                    ${_('N/A')}
                   % endif
                 </label>
               </p>
@@ -269,9 +269,9 @@ from courseware.courses import course_image_url, get_course_about_section, get_c
                 <b>${_('Country')}:</b>
                 <label>
                   % if order.bill_to_country:
-                    ${order.bill_to_country.upper()}
+                    ${_('{bill_to_country}'.format(bill_to_country=order.bill_to_country.upper()))}
                   % else:
-                    N/A
+                    ${_('N/A')}
                   % endif
                 </label>
               </p>
