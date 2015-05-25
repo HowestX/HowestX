@@ -16,7 +16,6 @@ from django.utils.timezone import UTC
 from django.utils.html import escape
 from django.contrib.auth.models import User
 from edxmako.shortcuts import render_to_string
-from django_sudo.utils import region_name
 from xblock.core import XBlock
 from xblock.exceptions import InvalidScopeError
 from xblock.fragment import Fragment
@@ -210,7 +209,7 @@ def grade_histogram(module_id):
 
 
 @contract(user=User, has_instructor_access=bool, block=XBlock, view=basestring, frag=Fragment, context="dict|None")
-def add_staff_markup(user, has_instructor_access, course_id, block, view, frag, context):  # pylint: disable=unused-argument
+def add_staff_markup(user, has_instructor_access, block, view, frag, context):  # pylint: disable=unused-argument
     """
     Updates the supplied module with a new get_html function that wraps
     the output of the old get_html function with additional information
@@ -298,7 +297,6 @@ def add_staff_markup(user, has_instructor_access, course_id, block, view, frag, 
         'category': str(block.__class__.__name__),
         # Template uses element_id in js function names, so can't allow dashes
         'element_id': block.location.html_id().replace('-', '_'),
-        'region': region_name(unicode(course_id)),
         'edit_link': edit_link,
         'user': user,
         'xqa_server': settings.FEATURES.get('XQA_SERVER', "http://your_xqa_server.com"),

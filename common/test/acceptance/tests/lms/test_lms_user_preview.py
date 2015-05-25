@@ -38,10 +38,8 @@ class StaffViewTest(UniqueCourseTest):
 
         # Auto-auth register for the course.
         # Do this as global staff so that you will see the Staff View
-        staff_password = 'test'
         AutoAuthPage(self.browser, username=self.USERNAME, email=self.EMAIL,
-                     course_id=self.course_id, staff=True, password=staff_password).visit()
-        self.get_sudo_access(InstructorDashboardPage(self.browser, self.course_id), staff_password)
+                     course_id=self.course_id, staff=True, password='test').visit()
 
     def _goto_staff_page(self):
         """
