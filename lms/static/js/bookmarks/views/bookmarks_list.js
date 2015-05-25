@@ -1,6 +1,6 @@
 ;(function (define, undefined) {
     'use strict';
-    define(['gettext', 'jquery', 'underscore', 'backbone', 'moment'],
+    define(['gettext', 'jquery', 'underscore', 'backbone', 'js/vendor/moment'],
         function (gettext, $, _, Backbone, _moment) {
 
         var moment = _moment || window.moment;
@@ -68,7 +68,6 @@
              * @param {String} isoDate - ISO 8601 formatted date string.
              */
             humanFriendlyDate: function (isoDate) {
-                moment.locale(this.langCode);
                 return moment(isoDate).format('LL');
             },
 
