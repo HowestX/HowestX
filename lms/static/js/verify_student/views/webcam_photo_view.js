@@ -264,6 +264,7 @@
             // Go back to the initial button state
             $( "#webcam_reset_button", this.el ).addClass('is-hidden');
             $( "#webcam_capture_button", this.el ).removeClass('is-hidden');
+            $('#submit').attr('title', '');
         },
 
         capture: function() {
@@ -274,6 +275,7 @@
                 // Trigger an event which parent views can use to fire a
                 // business intelligence event
                 this.trigger( 'imageCaptured' );
+                this.capture_sound();
 
                 // Hide the capture button, and show the reset button
                 $( "#webcam_capture_button", this.el ).addClass('is-hidden');
@@ -318,7 +320,13 @@
         setSubmitButtonFocused: function( ){
             $( this.submitButton )
                 .trigger('focus');
-            $('#photo_message').text("Photo Captured successfully ")
+            $('#submit').attr('title', gettext( 'Photo Captured successfully '));
+        },
+
+        capture_sound: function(){
+            var audio = document.createElement('audio');
+            audio.src = '/static/audio/camera_capture.wav';
+            audio.play();
         },
 
         isMobileDevice: function() {
