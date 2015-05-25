@@ -390,7 +390,10 @@ def register_and_enroll_students(request, course_id):  # pylint: disable=too-man
 
                     # make sure user is enrolled in course
                     if not CourseEnrollment.is_enrolled(user, course_id):
-                        CourseEnrollment.enroll(user, course_id)
+                        enrollment_obj = CourseEnrollment.enroll(user, course_id)
+                        reason = 'Enrolling via csv upload'
+                        ManualEnrollmentAudit.create_manual_enrollment_audit(request.user, UN_ENROLL_TO_ENROLL, reason,
+                                                                             enrollment_obj)
                         log.info(
                             u'user %s enrolled in the course %s',
                             username,
@@ -404,7 +407,10 @@ def register_and_enroll_students(request, course_id):  # pylint: disable=too-man
                     password = generate_unique_password(generated_passwords)
 
                     try:
-                        create_and_enroll_user(email, username, name, country, password, course_id)
+                        enrollment_obj = create_and_enroll_user(email, username, name, country, password, course_id)
+                        reason = 'Enrolling via csv upload'
+                        ManualEnrollmentAudit.create_manual_enrollment_audit(request.user, UN_ENROLL_TO_ENROLL, reason,
+                                                                             enrollment_obj)
                     except IntegrityError:
                         row_errors.append({
                             'username': username, 'email': email, 'response': _('Username {user} already exists.').format(user=username)})
@@ -473,7 +479,7 @@ def create_and_enroll_user(email, username, name, country, password, course_id):
     profile.save()
 
     # try to enroll the user in this course
-    CourseEnrollment.enroll(user, course_id)
+    return CourseEnrollment.enroll(user, course_id)
 
 
 @ensure_csrf_cookie
@@ -519,11 +525,20 @@ def students_update_enrollment(request, course_id):
     """
     course_id = SlashSeparatedCourseKey.from_deprecated_string(course_id)
     action = request.POST.get('action')
-    reason = request.POST.get('reason')
     identifiers_raw = request.POST.get('identifiers')
     identifiers = _split_input_list(identifiers_raw)
     auto_enroll = request.POST.get('auto_enroll') in ['true', 'True', True]
     email_students = request.POST.get('email_students') in ['true', 'True', True]
+    is_white_label = CourseMode.is_white_label(course_id)
+    reason = request.POST.get('reason')
+    if is_white_label:
+        if not reason:
+            return JsonResponse(
+                {
+                    'action': action,
+                    'results': [{'error': True}],
+                    'auto_enroll': auto_enroll,
+                }, status=400)
     enrollment_obj = None
     state_transition = DEFAULT_TRANSITION_STATE
 

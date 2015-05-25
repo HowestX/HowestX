@@ -37,13 +37,15 @@
       ${_("You will not get notification for emails that bounce, so please double-check spelling.")} </label>
     <textarea rows="6" name="student-ids" placeholder="${_("Email Addresses/Usernames")}" spellcheck="false"></textarea>
   </p>
+  <input type="hidden" id="is_course_white_label" value="${section_data['is_white_label']}">
+  % if section_data['is_white_label']:
   <p>
     <label for="reason-field-id">
       ${_("Enter the reason why the students are Enroll or unEnroll manually.")}
       ${_("The reason field cannot be left blank.")} </label>
     <textarea rows="2" id="reason-field-id" name="reason-field" placeholder="${_('Reason')}" spellcheck="false"></textarea>
   </p>
-
+  %endif
   <div class="enroll-option">
     <input type="checkbox" name="auto-enroll" value="Auto-Enroll" checked="yes">
     <label for="auto-enroll">${_("Auto Enroll")}</label>

@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
             ('time_stamp', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, null=True, blank=True)),
             ('state_transition', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('reason', self.gf('django.db.models.fields.TextField')()),
+            ('reason', self.gf('django.db.models.fields.TextField')(null=True)),
         ))
         db.send_create_signal('student', ['ManualEnrollmentAudit'])
 
@@ -144,7 +144,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'ManualEnrollmentAudit'},
             'enrollment': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['student.CourseEnrollment']", 'null': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'reason': ('django.db.models.fields.TextField', [], {}),
+            'reason': ('django.db.models.fields.TextField', [], {'null': 'True'}),
             'state_transition': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'time_stamp': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'null': 'True', 'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})

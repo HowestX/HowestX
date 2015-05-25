@@ -367,7 +367,8 @@ class BatchEnrollment
     # gather elements
     @$identifier_input       = @$container.find("textarea[name='student-ids']")
     @$enrollment_button      = @$container.find(".enrollment-button")
-    @$reason_field      = @$container.find("textarea[name='reason-field']")
+    @$is_course_white_label  = @$container.find("#is_course_white_label").val()
+    @$reason_field           = @$container.find("textarea[name='reason-field']")
     @$checkbox_autoenroll    = @$container.find("input[name='auto-enroll']")
     @$checkbox_emailstudents = @$container.find("input[name='email-students']")
     @$task_response          = @$container.find(".request-response")
@@ -375,9 +376,10 @@ class BatchEnrollment
 
     # attach click handler for enrollment buttons
     @$enrollment_button.click (event) =>
-      if not @$reason_field.val()
-        @fail_with_error gettext "Reason field should not be left blank."
-        return false
+      if @$is_course_white_label
+        if not @$reason_field.val()
+          @fail_with_error gettext "Reason field should not be left blank."
+          return false
 
       emailStudents = @$checkbox_emailstudents.is(':checked')
       send_data =
