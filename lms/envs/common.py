@@ -32,6 +32,7 @@ Longer TODO:
 import sys
 import os
 import imp
+import ldap
 
 from path import path
 from warnings import simplefilter
@@ -516,10 +517,29 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'edxmako.shortcuts.microsite_footer_context_processor',
 )
 
-# use the ratelimit backend to prevent brute force attacks
+#AUTH_LDAP_START_TLS = True
+
+AUTH_LDAP_SERVER_URI = "ldap://hogeschool-wvl.be"
+
+AUTH_LDAP_BIND_AS_AUTHENTICATING_USER = True
+
+AUTH_LDAP_USER_DN_TEMPLATE = '%(user)s' # Users log in as name.lastname@student.howest.be, it works
+
+AUTH_LDAP_CONNECTION_OPTIONS = {
+    ldap.OPT_REFERRALS: 0,
+    ldap.OPT_PROTOCOL_VERSION: 3
+}
+
 AUTHENTICATION_BACKENDS = (
-    'ratelimitbackend.backends.RateLimitModelBackend',
+    'django_auth_ldap.backend.LDAPBackend',
+    'django.contrib.auth.backends.ModelBackend',
 )
+
+## use the ratelimit backend to prevent brute force attacks
+#AUTHENTICATION_BACKENDS = (
+#    'ratelimitbackend.backends.RateLimitModelBackend',
+#)
+
 STUDENT_FILEUPLOAD_MAX_SIZE = 4 * 1000 * 1000  # 4 MB
 MAX_FILEUPLOADS_PER_INPUT = 20
 
