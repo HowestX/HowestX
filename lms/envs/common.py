@@ -2370,7 +2370,7 @@ ACCOUNT_VISIBILITY_CONFIGURATION = {
 # E-Commerce API Configuration
 ECOMMERCE_PUBLIC_URL_ROOT = None
 ECOMMERCE_API_URL = None
-ECOMMERCE_API_SIGNING_KEY = 'search.tests.mock_search_engine.MockSearchEngine'
+ECOMMERCE_API_SIGNING_KEY = None
 ECOMMERCE_API_TIMEOUT = 5
 
 # Reverification checkpoint name pattern
