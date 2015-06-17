@@ -1701,3 +1701,13 @@ class LanguageProficiency(models.Model):
         choices=settings.ALL_LANGUAGES,
         help_text=ugettext_lazy("The ISO 639-1 language code for this language.")
     )
+
+from django_auth_ldap.backend import LDAPBackend
+
+class LDAPHowestBackend(LDAPBackend):
+    def ldap_to_django_username(self, username):
+        return username.replace('.', '').split('@')[0][:30]
+
+    def django_to_ldap_username(self, username):
+        return username 
+
