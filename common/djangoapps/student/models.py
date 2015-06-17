@@ -1706,8 +1706,28 @@ from django_auth_ldap.backend import LDAPBackend
 
 class LDAPHowestBackend(LDAPBackend):
     def ldap_to_django_username(self, username):
+        #if username == '':
+        #    return 'non-existing username'
+        #return username.replace('.', '').split('@')[0][:30]
         return username.replace('.', '').split('@')[0][:30]
 
     def django_to_ldap_username(self, username):
-        return username 
+        return username + '@howestedx.local'
+
+    def authenticate(self, username, password, **kwargs):
+        print '[authenticate] *' * 400
+        print 'Username in authenticate : *%s*' % username
+
+        if username == '':
+            return None
+
+        return LDAPBackend.authenticate(self, username, password, **kwargs)
+
+    def get_or_create_user(self, username, ldap_user):
+        print '[get_or_create_user] *' * 400
+        print 'Username : *%s*' % username
+        print '*' * 400
+        #if username == '':
+        #    return (None, False)
+        return LDAPBackend.get_or_create_user(self, username, ldap_user)
 

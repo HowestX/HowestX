@@ -34,6 +34,8 @@ import os
 import imp
 import ldap
 
+from django_auth_ldap.config import LDAPSearch
+
 from path import path
 from warnings import simplefilter
 from django.utils.translation import ugettext_lazy as _
@@ -519,9 +521,22 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 # LDAP CONF
 AUTH_LDAP_SERVER_URI = "ldap://howest-test-ad.cloudapp.net"
+
 AUTH_LDAP_BIND_AS_AUTHENTICATING_USER = True
 # AUTH_LDAP_USER_DN_TEMPLATE = '%(user)s'
-AUTH_LDAP_USER_DN_TEMPLATE = 'mail=%(user)s,OU=MCT NMCT,OU=Studenten,OU=Howest,DC=hogeschool-wvl,DC=be'
+#AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=users,dc=howestedx,dc=local", ldap.SCOPE_SUBTREE, "(cn=%(user)s)")
+
+#AUTH_LDAP_USER_DN_TEMPLATE = 'cn=%(user)s,OU=Users,DC=howestedx,DC=local'
+AUTH_LDAP_USER_DN_TEMPLATE = '%(user)s'
+
+
+AUTH_LDAP_ALWAYS_UPDATE_USER = True
+
+#AUTH_LDAP_PROFILE_ATTR_MAP = {
+#    "first_name": "givenName",
+#    "last_name": "sn",
+#    "email": "mail",
+#}
 
 AUTH_LDAP_USER_ATTR_MAP = {
     "first_name": "givenName",

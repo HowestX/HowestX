@@ -123,6 +123,7 @@ from notification_prefs.views import enable_notifications
 # Note that this lives in openedx, so this dependency should be refactored.
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 
+from pprint import pprint
 
 log = logging.getLogger("edx.student")
 AUDIT_LOG = logging.getLogger("audit")
@@ -916,7 +917,8 @@ def login_user(request, error=""):  # pylint: disable-msg=too-many-statements,un
     redirect_url = None
     response = None
     running_pipeline = None
-    third_party_auth_requested = third_party_auth.is_enabled() and pipeline.running(request)
+    #third_party_auth_requested = third_party_auth.is_enabled() and pipeline.running(request)
+    third_party_auth_requested = False
     third_party_auth_successful = False
     trumped_by_first_party_auth = bool(request.POST.get('email')) or bool(request.POST.get('password'))
     user = None
@@ -1014,6 +1016,12 @@ def login_user(request, error=""):  # pylint: disable-msg=too-many-statements,un
     if not third_party_auth_successful:
         try:
             user = authenticate(username=username, password=password, request=request)
+            pprint(user)
+            print '+' * 400
+            print 'User is none: %s, username %s, user.username %s' % (str(user == None), username, user.username if user else "(user was None)")
+            if user == None:
+                # try LDAP backend
+                user = authenticate(username=request.POST.get('email'), password=password, request=request)
         # this occurs when there are too many attempts from the same IP address
         except RateLimitException:
             return JsonResponse({
