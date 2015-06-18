@@ -526,8 +526,8 @@ AUTH_LDAP_BIND_AS_AUTHENTICATING_USER = True
 # AUTH_LDAP_USER_DN_TEMPLATE = '%(user)s'
 #AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=users,dc=howestedx,dc=local", ldap.SCOPE_SUBTREE, "(cn=%(user)s)")
 
-#AUTH_LDAP_USER_DN_TEMPLATE = 'cn=%(user)s,OU=Users,DC=howestedx,DC=local'
-AUTH_LDAP_USER_DN_TEMPLATE = '%(user)s'
+AUTH_LDAP_USER_DN_TEMPLATE = 'cn=%(user)s,OU=Users,DC=howestedx,DC=local'
+#AUTH_LDAP_USER_DN_TEMPLATE = '%(user)s'
 
 
 AUTH_LDAP_ALWAYS_UPDATE_USER = True
